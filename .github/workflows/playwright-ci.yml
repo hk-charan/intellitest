@@ -1,0 +1,110 @@
+name: IntelliTest E2E (UI + API + Hybrid + a11y) Automation Pipeline
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+  workflow_dispatch:
+    inputs:
+      test_suite:
+        description: 'Select Test Suite to Execute'
+        required: true
+        default: 'all'
+        type: choice
+        options:
+          - all
+          - ui
+          - api
+          - hybrid
+          - a11y
+          - cross-browser
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+jobs:
+  e2e-automation:
+    timeout-minutes: 20
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📥 Checkout IntelliTest Repository
+        uses: actions/checkout@v4
+
+      - name: ⚙️ Setup Node.js 22 with NPM Cache
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'npm'
+
+      - name: 📦 Install Project Dependencies
+        run: npm ci
+
+      - name: 🔍 Run Strict TypeScript Compiler Check
+        run: npm run typecheck
+
+      - name: 🌐 Install Playwright Browsers & OS Dependencies
+        run: npx playwright install --with-deps chromium firefox webkit
+
+      - name: 🚀 Execute IntelliTest Automation Suite
+        env:
+          CI: true
+          UI_BASE_URL: https://www.saucedemo.com
+          API_BASE_URL: https://restful-booker.herokuapp.com
+          ENABLE_AI_ANALYSIS: ${{ secrets.GEMINI_API_KEY != '' && 'true' || 'false' }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GEMINI_MODEL: gemini-3.1-flash-lite
+        run: |
+          SUITE="${{ github.event.inputs.test_suite || 'all' }}"
+          if [ "$SUITE" = "ui" ]; then
+            npm run test:ui
+          elif [ "$SUITE" = "api" ]; then
+            npm run test:api
+          elif [ "$SUITE" = "hybrid" ]; then
+            npm run test:hybrid
+          elif [ "$SUITE" = "a11y" ]; then
+            npm run test:a11y
+          elif [ "$SUITE" = "cross-browser" ]; then
+            npm run test:cross-browser
+          else
+            npx playwright test --project=chromium-ui --project=api-tests --project=hybrid-tests
+          fi
+
+      - name: 📊 Upload Playwright HTML Report & Traces
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-html-report
+          path: |
+            playwright-report/
+            test-results/
+          retention-days: 14
+
+      - name: 📈 Upload Raw Allure Results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: allure-results
+          path: allure-results/
+          retention-days: 14
+
+      - name: 🌐 Prepare Playwright Report for GitHub Pages
+        if: always() && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: playwright-report/
+
+  deploy-report:
+    needs: e2e-automation
+    if: always() && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: 🚀 Deploy Live Test Dashboard to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

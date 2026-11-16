@@ -1,0 +1,50 @@
+{
+  "validUsers": [
+    {
+      "id": "USR_001",
+      "role": "standard",
+      "username": "standard_user",
+      "password": "secret_sauce",
+      "expectedOutcome": "success",
+      "description": "Standard active customer with full e-commerce access"
+    }
+  ],
+  "invalidAndLockedUsers": [
+    {
+      "id": "USR_002",
+      "role": "locked",
+      "username": "locked_out_user",
+      "password": "secret_sauce",
+      "expectedOutcome": "error",
+      "expectedErrorMessage": "Epic sadface: Sorry, this user has been locked out.",
+      "description": "Locked out account should be blocked from logging in"
+    },
+    {
+      "id": "USR_003",
+      "role": "invalid",
+      "username": "non_existent_user",
+      "password": "wrong_password_123",
+      "expectedOutcome": "error",
+      "expectedErrorMessage": "Epic sadface: Username and password do not match any user in this service",
+      "description": "Unregistered username and password should be rejected"
+    },
+    {
+      "id": "USR_004",
+      "role": "invalid",
+      "username": "",
+      "password": "secret_sauce",
+      "expectedOutcome": "error",
+      "expectedErrorMessage": "Epic sadface: Username is required",
+      "description": "Empty username submission should trigger required field validation"
+    },
+    {
+      "id": "USR_005",
+      "role": "invalid",
+      "username": "standard_user",
+      "password": "",
+      "expectedOutcome": "error",
+      "expectedErrorMessage": "Epic sadface: Password is required",
+      "description": "Empty password submission should trigger required field validation"
+    }
+  ]
+}

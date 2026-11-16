@@ -1,0 +1,22 @@
+version: '3.9'
+
+services:
+  intellitest-runner:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: intellitest-e2e-runner
+    environment:
+      - CI=true
+      - TEST_ENV=qa
+      - UI_BASE_URL=https://www.saucedemo.com
+      - API_BASE_URL=https://restful-booker.herokuapp.com
+      - HEADLESS=true
+      - WORKERS=4
+      - ENABLE_AI_ANALYSIS=${ENABLE_AI_ANALYSIS:-false}
+      - GEMINI_API_KEY=${GEMINI_API_KEY:-}
+      - GEMINI_MODEL=${GEMINI_MODEL:-gemini-3.1-flash-lite}
+    volumes:
+      - ./playwright-report:/app/playwright-report
+      - ./allure-results:/app/allure-results
+      - ./test-results:/app/test-results
