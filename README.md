@@ -162,7 +162,7 @@ intellitest/
 
 ### 1. Clone & Install Dependencies
 ```bash
-git clone <your-repo-url>
+git clone https://github.com/hk-charan/intellitest.git
 cd intellitest
 npm install
 npx playwright install --with-deps chromium
